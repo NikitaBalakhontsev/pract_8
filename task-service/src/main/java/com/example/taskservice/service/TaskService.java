@@ -1,22 +1,27 @@
 package com.example.taskservice.service;
 
+import com.example.taskservice.client.UserClient;
+import com.example.taskservice.dto.TaskWithUsernameDTO;
 import com.example.taskservice.model.Task;
 import com.example.taskservice.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final RestTemplate restTemplate;
+    private final UserClient userClient;
 
     public Task create(Task task) {
+        // Демонстрация вызова другого сервиса
+        String username = userClient.getUsernameById(task.getUserId()).getName();
+        System.out.println("Создана задача для пользователя: " + username);
         return taskRepository.save(task);
     }
 
@@ -42,11 +47,37 @@ public class TaskService {
         existing.setDescription(task.getDescription());
         existing.setStatus(task.getStatus());
         existing.setUserId(task.getUserId());
-        existing.setProjectId(task.getProjectId());
         return taskRepository.save(existing);
     }
 
-    public String getUserName(Long userId) {
-        return restTemplate.getForObject("http://user-service/users/" + userId + "/name", String.class);
+    public List<TaskWithUsernameDTO> findAllWithUsernames() {
+        return taskRepository.findAll().stream()
+                .map(task -> {
+                    String username = userClient.getUsernameById(task.getUserId()).getName();
+                    return new TaskWithUsernameDTO(
+                            task.getId(),
+                            task.getTitle(),
+                            task.getDescription(),
+                            task.getStatus(),
+                            task.getProjectId(),
+                            task.getUserId(),
+                            username
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    public TaskWithUsernameDTO findByIdWithUsername(Long id) {
+        Task task = findById(id).orElseThrow();
+        String username = userClient.getUsernameById(task.getUserId()).getName();
+        return new TaskWithUsernameDTO(
+                task.getId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getStatus(),
+                task.getProjectId(),
+                task.getUserId(),
+                username
+        );
     }
 }

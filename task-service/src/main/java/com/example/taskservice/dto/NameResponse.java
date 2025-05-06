@@ -1,12 +1,12 @@
-package com.example.taskservice.model;
+package com.example.taskservice.dto;
 
-public class UserNameResponse {
+public class NameResponse {
     private String name;
 
-    public UserNameResponse() {
+    public NameResponse() {
     }
 
-    public UserNameResponse(String name) {
+    public NameResponse(String name) {
         this.name = name;
     }
 
@@ -18,4 +18,3 @@ public class UserNameResponse {
         this.name = name;
     }
 }
-

@@ -1,5 +1,7 @@
 package com.example.taskservice.controller;
 
+import com.example.taskservice.client.UserClient;
+import com.example.taskservice.dto.TaskWithUsernameDTO;
 import com.example.taskservice.model.Task;
 import com.example.taskservice.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,16 @@ public class TaskController {
         return taskService.findAll();
     }
 
+    @GetMapping("/with-usernames")
+    public List<TaskWithUsernameDTO> getAllWithUsernames() {
+        return taskService.findAllWithUsernames();
+    }
+
+    @GetMapping("/{id}/with-username")
+    public TaskWithUsernameDTO getWithUsername(@PathVariable Long id) {
+        return taskService.findByIdWithUsername(id);
+    }
+
     @GetMapping("/project/{projectId}")
     public List<Task> getByProject(@PathVariable Long projectId) {
         return taskService.findByProjectId(projectId);
@@ -42,11 +54,5 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         taskService.delete(id);
-    }
-
-    @GetMapping("/{id}/username")
-    public String getUserNameByTask(@PathVariable Long id) {
-        Task task = taskService.findById(id).orElseThrow();
-        return taskService.getUserName(task.getUserId());
     }
 }
