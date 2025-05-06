@@ -1,7 +1,7 @@
 package com.example.projectservice.controller;
 
 import com.example.projectservice.model.Project;
-import com.example.projectservice.repository.ProjectRepository;
+import com.example.projectservice.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,25 +12,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProjectController {
 
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
 
     @GetMapping
     public List<Project> findAll() {
-        return projectRepository.findAll();
+        return projectService.findAll();
     }
 
     @GetMapping("/{id}")
     public Project findById(@PathVariable Long id) {
-        return projectRepository.findById(id).orElseThrow();
+        return projectService.findById(id);
     }
 
     @PostMapping
     public Project save(@RequestBody Project project) {
-        return projectRepository.save(project);
+        return projectService.save(project);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        projectRepository.deleteById(id);
+        projectService.delete(id);
     }
 }

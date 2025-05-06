@@ -47,6 +47,10 @@ dependencyManagement {
     }
 }
 
-tasks.named('test') {
+test {
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat "full"
+    }
     useJUnitPlatform()
 }
