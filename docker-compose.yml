@@ -49,6 +49,40 @@ services:
     healthcheck:
       test: "exit 0"
 
+  postgres-project:
+    image: postgres:15
+    restart: always
+    container_name: postgres-project
+    environment:
+      POSTGRES_DB: projectdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata-project:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: "exit 0"
+
+
+  postgres-task:
+    image: postgres:15
+    restart: always
+    container_name: postgres-task
+    environment:
+      POSTGRES_DB: taskdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata-task:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: "exit 0"
 
 
   user-service:
@@ -65,6 +99,51 @@ services:
       eureka-service:
         condition: service_healthy
       postgres-user:
+        condition: service_healthy
+    environment:
+      - spring.profiles.active=default
+      - spring.cloud.config.uri=http://config-service:8888
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    networks:
+      - backend
+
+
+  project-service:
+    image: project-service:latest
+    restart: always
+    build:
+      context: ./project-service
+    container_name: project-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service:
+        condition: service_healthy
+      postgres-project:
+        condition: service_healthy
+    environment:
+      - spring.profiles.active=default
+      - spring.cloud.config.uri=http://config-service:8888
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    networks:
+      - backend
+
+  task-service:
+    image: task-service:latest
+    restart: always
+    build:
+      context: ./task-service
+    container_name: task-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service:
+        condition: service_healthy
+      postgres-task:
         condition: service_healthy
     environment:
       - spring.profiles.active=default
@@ -96,6 +175,8 @@ services:
 
 volumes:
   pgdata-user:
+  pgdata-project:
+  pgdata-task:
 
 networks:
   backend:
