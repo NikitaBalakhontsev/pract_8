@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+
+  config-service:
+    image: config-service:latest
+    restart: always
+    build:
+      context: ./config-service
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    networks:
+      - backend
+    healthcheck:
+      test: "exit 0"
+
+  eureka-service:
+    image: eureka-service:latest
+    restart: always
+    build:
+      context: ./eureka-service
+    container_name: eureka-service
+    ports:
+      - "8761:8761"
+    depends_on:
+      - config-service
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    networks:
+      - backend
+    healthcheck:
+      test: "exit 0"
+
+  postgres-user:
+    image: postgres:15
+    restart: always
+    container_name: postgres-user
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-user:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: "exit 0"
+
+
+
+  user-service:
+    image: user-service:latest
+    restart: always
+    build:
+      context: ./user-service
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service:
+        condition: service_healthy
+      postgres-user:
+        condition: service_healthy
+    environment:
+      - spring.profiles.active=default
+      - spring.cloud.config.uri=http://config-service:8888
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    networks:
+      - backend
+
+
+  gateway-service:
+    image: gateway-service:latest
+    restart: always
+    build:
+      context: ./gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service:
+        condition: service_healthy
+    environment:
+      - spring.profiles.active=default
+      - spring.cloud.config.uri=http://config-service:8888
+      - eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka
+    networks:
+      - backend
+
+volumes:
+  pgdata-user:
+
+networks:
+  backend:
+    driver: bridge
